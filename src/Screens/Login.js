@@ -8,37 +8,58 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   ScrollView,
+  ToastAndroid
 } from 'react-native';
 import SmitLogo from '../Assets/smitlogo.jpg';
 import Icon from 'react-native-vector-icons/Fontisto';
 import axios from 'axios';
+import {AsyncStorage} from 'react-native';
 
 const Login = ({navigation}) => {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
+  const[token ,setToken] = useState()
   const [apiRes, setApiRes] = useState();
-  // useEffect(()=>{
-  //   fetch('https://fakestoreapi.com/products')
-  //           .then(res=>res.json())
-  //           .then(json=>console.log(json))
-  // },[])
 
-  useEffect(() => {
-    console.log(apiRes);
-  }, [apiRes]);
+
+  const showToastWithGravityAndOffset = () => {
+    ToastAndroid.showWithGravityAndOffset(
+      'User Login Successfuly',
+      ToastAndroid.LONG,
+      ToastAndroid.TOP,
+      25,
+      150,
+    );
+  };
+
+  useEffect(()=>{
+    const checkUserToken =async ()=>{
+      const token = await AsyncStorage.getItem('token')
+      setToken(token)
+    }
+    checkUserToken()
+  },[])
   const userLogedIn = async () => {
     try {
-      //   const userDetails = {
-      //     email,
-      //     password,
-      //   };
-      //   console.log(userDetails);
-      //   const res = await axios.post(
-      //     'http://10.0.2.2:3000/api/students/login',
-      //     userDetails,
-      //   );
-      //   console.log(res);
-      //   setApiRes(res.data);
+      const userDetails = {
+        email,
+        password,
+      };
+      // console.log(userDetails);
+      axios({
+        method: "post",
+        url: "http://192.168.100.67:3000/api/students/login",
+        data: {
+          ...userDetails,
+        },
+      })
+        .then((res) => {
+          console.log(res.data);
+          // ToastAndroid.show('Student Login Successfuly', ToastAndroid.LONG);
+          showToastWithGravityAndOffset()
+         navigation.navigate('attendance', {id : res.data.id})
+        })
+        .catch((err) => console.log(err));
       navigation.navigate('attendance');
     } catch (error) {
       console.log(error);

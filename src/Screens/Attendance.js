@@ -15,11 +15,14 @@ import MatIcon from 'react-native-vector-icons/MaterialIcons';
 import IonICons from 'react-native-vector-icons/Ionicons';
 import userimage from '../Assets/userimage1.jpg';
 import axios from 'axios';
+import { useRoute } from '@react-navigation/native';
+
 import {
   useCameraPermission,
   useCameraDevice,
   Camera,
 } from 'react-native-vision-camera';
+
 
 const Attendance = ({navigation}) => {
   const [userImage, setUserImage] = useState(null);
@@ -30,9 +33,22 @@ const Attendance = ({navigation}) => {
   const {hasPermission, requestPermission} = useCameraPermission();
   const [switchCamera, setSwitchCamera] = useState(true);
   const [cameraFlash, setCameraFlash] = useState(true);
+  const[stdPic, setStdPic] = useState()
+  const [firstName, setFirstName] = useState();
+  const [lastName, setlastName] = useState();
+  const [course, setCourse] = useState();
+  const [password, setPassword] = useState();
+  const [email, setEmail] = useState();
+  const [phoneNumber, setPhoneNum] = useState();
+  const [studentData, setStudentData] = useState();
+  const [showPassword , setShowPassword] = useState(false)
+  
 
-  const camera = useRef(null);
   const device = useCameraDevice(switchCamera ? 'front' : 'back');
+  const camera = useRef(null);
+  const route = useRoute()
+  const id = route.params?.id
+  console.log('id----->' , id)
 
   // console.log('hasPermission-->', hasPermission);
   if (device == null) return <NoCameraDeviceError />;
@@ -41,6 +57,27 @@ const Attendance = ({navigation}) => {
       requestPermission();
     }
   }, []);
+
+  useEffect(()=>{
+    if (id) {
+      axios({
+        method: "get",
+        url: `http://192.168.100.67:3000/api/students/getstudent/${id}`,
+      })
+        .then((res) => {
+          setStdPic(res.data.studentData.Image)
+          setStudentData(res.data.studentData);
+          setFirstName(res.data.studentData.firstName);
+          setlastName(res.data.studentData.lastName);
+          setCourse(res.data.studentData.course);
+          setEmail(res.data.studentData.email);
+          setPassword(res.data.studentData.password);
+          setPhoneNum(res.data.studentData.phoneNumber);
+        })
+        .catch((err) => console.log(err.response));
+    }
+
+  },[id])
 
   const stdCheckOutAttendance = () => {
     console.log('Student CheckOut');
@@ -61,7 +98,8 @@ const Attendance = ({navigation}) => {
     setStdPhotoPath(photo.path);
     setShownCamera(!shownCamera);
   };
-
+  console.log('stdPic---->' , stdPic)
+  console.log('userImage---->' , userImage)
   return (
     <ScrollView
       style={{
@@ -73,9 +111,9 @@ const Attendance = ({navigation}) => {
       <View style={styles.imageContainer}>
         <Image
           style={styles.userimage}
-          source={userImage ? {uri: `file://:${userImage}`} : UserImage}
+          source={userImage ? {uri: `file://:${userImage}`} : stdPic ? {uri: `${stdPic}`} : UserImage}
         />
-        {!userImage && (
+        {(!userImage || !stdPic)&& (
           <Icon
             style={styles.cameraIcon}
             name="camera"
@@ -153,6 +191,8 @@ const Attendance = ({navigation}) => {
             placeholderTextColor={'#0866ad'}
             placeholder="Name"
             style={styles.attenInput}
+            value={firstName}
+            editable={false}
           />
           <Icon
             style={styles.inputIcon}
@@ -166,6 +206,9 @@ const Attendance = ({navigation}) => {
             placeholderTextColor={'#0866ad'}
             placeholder="Email"
             style={styles.attenInput}
+            value={email}
+            editable={false}
+
           />
           <FontistoIcon
             style={styles.inputIcon}
@@ -179,6 +222,10 @@ const Attendance = ({navigation}) => {
             placeholderTextColor={'#0866ad'}
             placeholder="Phone"
             style={styles.attenInput}
+            value={phoneNumber}
+            editable={false}
+
+
           />
           <Icon
             style={styles.inputIcon}
@@ -188,10 +235,22 @@ const Attendance = ({navigation}) => {
           />
         </View>
         <View style={styles.inputContainer}>
+        <IonICons
+            style={styles.eyeIcon}
+            name={showPassword ? 'eye' : 'eye-off'}
+            size={24}
+            color="#000"
+            onPress ={()=> setShowPassword(!showPassword)}
+          />
           <TextInput
             placeholderTextColor={'#0866ad'}
             placeholder="Password"
             style={styles.attenInput}
+            value={password}
+            editable={false}
+            secureTextEntry={showPassword ? false : true}
+
+
           />
           <FontistoIcon
             style={styles.inputIcon}
@@ -244,8 +303,11 @@ const styles = StyleSheet.create({
     width: '80%',
     backgroundColor: '#efeded',
     paddingLeft: 60,
+    
 
     marginTop: 10,
+    // color : '#0866ad',
+    color : '#000'
   },
   inputContainer: {
     justifyContent: 'center',
@@ -255,6 +317,13 @@ const styles = StyleSheet.create({
   inputIcon: {
     position: 'absolute',
     left: '15%',
+  },
+  eyeIcon : {
+    position: 'absolute',
+    right: '13%',
+    top : 30,
+    zIndex : 222
+
   },
   CheckedInBtn: {
     height: 70,
