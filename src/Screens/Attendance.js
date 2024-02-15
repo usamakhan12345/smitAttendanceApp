@@ -16,13 +16,14 @@ import IonICons from 'react-native-vector-icons/Ionicons';
 import userimage from '../Assets/userimage1.jpg';
 import axios from 'axios';
 import { useRoute } from '@react-navigation/native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch } from 'react-redux';
 import {
   useCameraPermission,
   useCameraDevice,
   Camera,
 } from 'react-native-vision-camera';
-
+import {UserLogedIn} from "../Components/redux/Slices/authSlice"
 
 const Attendance = ({navigation}) => {
   const [userImage, setUserImage] = useState(null);
@@ -40,17 +41,25 @@ const Attendance = ({navigation}) => {
   const [password, setPassword] = useState();
   const [email, setEmail] = useState();
   const [phoneNumber, setPhoneNum] = useState();
-  const [studentData, setStudentData] = useState();
   const [showPassword , setShowPassword] = useState(false)
-  
+  const[stdId , setStdId] = useState()  
+  const[studentdata,setStudentData] = useState()
 
   const device = useCameraDevice(switchCamera ? 'front' : 'back');
   const camera = useRef(null);
   const route = useRoute()
   const id = route.params?.id
-  console.log('id----->' , id)
+  const dispatch = useDispatch()
+  // console.log('dispatch---->',dispatch)
+  // useEffect(()=>{
+  //   const checkUserToken =async ()=>{
+  //     const id = await AsyncStorage.getItem('id')
+  //     console.log('id-----in attenfdance>' , id)
+  //     await setStdId(id)
+  //   }
+  //   checkUserToken()
+  // },[])
 
-  // console.log('hasPermission-->', hasPermission);
   if (device == null) return <NoCameraDeviceError />;
   useEffect(() => {
     if (!hasPermission) {
@@ -59,12 +68,13 @@ const Attendance = ({navigation}) => {
   }, []);
 
   useEffect(()=>{
-    if (id) {
+    if (stdId || id) {
       axios({
         method: "get",
-        url: `http://192.168.100.67:3000/api/students/getstudent/${id}`,
+        url: `http://192.168.100.67:3000/api/students/getstudent/${id ?? stdId}`,
       })
         .then((res) => {
+          console.log('respose studernt data ',res.data.studentData)
           setStdPic(res.data.studentData.Image)
           setStudentData(res.data.studentData);
           setFirstName(res.data.studentData.firstName);
@@ -78,28 +88,31 @@ const Attendance = ({navigation}) => {
     }
 
   },[id])
-
+    console.log(firstName,email)
   const stdCheckOutAttendance = () => {
-    console.log('Student CheckOut');
     setStdCheckIn(!stdCheckIn);
   };
-  const stdCheckInAttendance = () => {
-    console.log('Student Checked In');
+  const stdCheckInAttendance = async () => {
     setStdCheckIn(!stdCheckIn);
+   const res = await dispatch(UserLogedIn())
+   console.log('dispatch res --->' ,res)
   };
 
   const CaptureStudentPicture = async () => {
-    console.log('student pic captured');
     const photo = await camera.current.takePhoto({
       flash: cameraFlash ? 'on' : 'off',
     });
-    console.log('photo------->', photo);
     setUserImage(photo.path);
     setStdPhotoPath(photo.path);
     setShownCamera(!shownCamera);
   };
-  console.log('stdPic---->' , stdPic)
-  console.log('userImage---->' , userImage)
+
+
+  // const UserLogOut =async ()=>{
+  //  await AsyncStorage.removeItem('token');
+  //  await AsyncStorage.removeItem('id');
+  //   navigation.navigate('login')
+  // }
   return (
     <ScrollView
       style={{
@@ -108,6 +121,7 @@ const Attendance = ({navigation}) => {
         // justifyContent: 'center',
         backgroundColor: '#fff',
       }}>
+      <TouchableOpacity  style={styles.logOutBtn} ><Text style={{color : 'red' , fontWeight : 'bold' , fontSize : 20}}> LogOut</Text ></TouchableOpacity>
       <View style={styles.imageContainer}>
         <Image
           style={styles.userimage}
@@ -373,5 +387,12 @@ const styles = StyleSheet.create({
     top: 90,
     fontSize: 30,
   },
+  logOutBtn: {
+    height : 40,
+    width : 110,
+    // backgroundColor : 'red',
+    justifyContent : 'center',
+    alignItems : 'center',
+  }
 });
 export default Attendance;
