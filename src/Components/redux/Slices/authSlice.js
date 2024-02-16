@@ -15,7 +15,6 @@ export const UserLogedIn = createAsyncThunk('Auth/UserLogedIn',async (data)=>{
           ...data,
         },
       })
-      // console.log('res for asyna userLogedIn' , res)
       return res.data
     }catch(error){
       console.log("error in async thunk", error)
@@ -31,11 +30,13 @@ export const AuthSlice = createSlice({
     userAuthenticaton : (state,action)=>{
         state.userData = {...action.payload}
     },
+    userLogOut : (state,action)=>{
+      state.userData = {}
+    }
   },
     extraReducers: (builder) => {
       builder
       .addCase(UserLogedIn.fulfilled, (state, action) => {
-        // console.log('action.payload--->', action.payload);
         state.userData = action.payload;
       })
       .addCase(UserLogedIn.pending, (state, action) => {
@@ -49,6 +50,6 @@ export const AuthSlice = createSlice({
   
 })
 
-export const {  userAuthenticaton } = AuthSlice.actions
+export const {  userAuthenticaton , userLogOut} = AuthSlice.actions
 
 export default AuthSlice.reducer

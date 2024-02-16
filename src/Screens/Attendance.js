@@ -13,21 +13,21 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import FontistoIcon from 'react-native-vector-icons/Fontisto';
 import MatIcon from 'react-native-vector-icons/MaterialIcons';
 import IonICons from 'react-native-vector-icons/Ionicons';
+import SimpleLineICon from 'react-native-vector-icons/SimpleLineIcons';
 import userimage from '../Assets/userimage1.jpg';
 import axios from 'axios';
 import { useRoute } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useDispatch } from 'react-redux';
+import { useDispatch , useSelector} from 'react-redux';
 import {
   useCameraPermission,
   useCameraDevice,
   Camera,
 } from 'react-native-vision-camera';
-import {UserLogedIn} from "../Components/redux/Slices/authSlice"
+import {UserLogedIn , userLogOut} from "../Components/redux/Slices/authSlice"
 
 const Attendance = ({navigation}) => {
   const [userImage, setUserImage] = useState(null);
-  const [userData, setUserData] = useState(null);
+  const [userDataLocal, setuserDataLocalLocal] = useState(null);
   const [stdCheckIn, setStdCheckIn] = useState(false);
   const [shownCamera, setShownCamera] = useState(false);
   const [stdPhotoPath, setStdPhotoPath] = useState();
@@ -50,15 +50,16 @@ const Attendance = ({navigation}) => {
   const route = useRoute()
   const id = route.params?.id
   const dispatch = useDispatch()
-  // console.log('dispatch---->',dispatch)
-  // useEffect(()=>{
-  //   const checkUserToken =async ()=>{
-  //     const id = await AsyncStorage.getItem('id')
-  //     console.log('id-----in attenfdance>' , id)
-  //     await setStdId(id)
-  //   }
-  //   checkUserToken()
-  // },[])
+  const {userData} = useSelector(state => state.auth);
+
+  // console.log('userData------>' , userData.id)
+
+  useEffect(()=>{
+    console.log('userData.id------->', userData?.id)
+    setStdId(userData?.id)
+  },[userData])
+
+
 
   if (device == null) return <NoCameraDeviceError />;
   useEffect(() => {
@@ -68,13 +69,13 @@ const Attendance = ({navigation}) => {
   }, []);
 
   useEffect(()=>{
-    if (stdId || id) {
+    if (stdId) {
       axios({
         method: "get",
-        url: `http://192.168.100.67:3000/api/students/getstudent/${id ?? stdId}`,
+        url: `http://192.168.100.67:3000/api/students/getstudent/${stdId}`,
       })
         .then((res) => {
-          console.log('respose studernt data ',res.data.studentData)
+          // console.log('respose studernt data 83',res.data.studentData)
           setStdPic(res.data.studentData.Image)
           setStudentData(res.data.studentData);
           setFirstName(res.data.studentData.firstName);
@@ -87,8 +88,7 @@ const Attendance = ({navigation}) => {
         .catch((err) => console.log(err.response));
     }
 
-  },[id])
-    console.log(firstName,email)
+  },[stdId])
   const stdCheckOutAttendance = () => {
     setStdCheckIn(!stdCheckIn);
   };
@@ -108,11 +108,12 @@ const Attendance = ({navigation}) => {
   };
 
 
-  // const UserLogOut =async ()=>{
-  //  await AsyncStorage.removeItem('token');
-  //  await AsyncStorage.removeItem('id');
-  //   navigation.navigate('login')
-  // }
+  const UserLogOut = ()=>{
+    console.log('user log out h')
+    dispatch(userLogOut())
+    navigation.navigate('login')
+
+  }
   return (
     <ScrollView
       style={{
@@ -121,7 +122,22 @@ const Attendance = ({navigation}) => {
         // justifyContent: 'center',
         backgroundColor: '#fff',
       }}>
-      <TouchableOpacity  style={styles.logOutBtn} ><Text style={{color : 'red' , fontWeight : 'bold' , fontSize : 20}}> LogOut</Text ></TouchableOpacity>
+            {/* style={styles.logOutIcon} */}
+      <TouchableOpacity style={styles.logOutBtn}>
+        <Text style={{color : 'red' , fontWeight : 'bold' , marginLeft : 5}}>
+        <SimpleLineICon
+            style={styles.logOutIcon}
+            name="logout"
+            size={28}
+            color="red"
+            onPress={UserLogOut}
+
+          />
+    
+        </Text>
+       
+      </TouchableOpacity>
+      
       <View style={styles.imageContainer}>
         <Image
           style={styles.userimage}
@@ -296,7 +312,6 @@ const styles = StyleSheet.create({
     height: 150,
     width: 150,
     backgroundColor: '#fff',
-    // marginTop: '50%',
     borderRadius: 75,
   },
   imageContainer: {
@@ -320,7 +335,6 @@ const styles = StyleSheet.create({
     
 
     marginTop: 10,
-    // color : '#0866ad',
     color : '#000'
   },
   inputContainer: {
@@ -393,6 +407,21 @@ const styles = StyleSheet.create({
     // backgroundColor : 'red',
     justifyContent : 'center',
     alignItems : 'center',
+  },
+  logOutIcon : {
+    position: 'absolute',
+    left: '5%',
+    top : 20,
+    zIndex : 200,
+    marginRight : 10
+
+  },
+  logOutBtn : {
+    position: 'absolute',
+    left: '5%',
+    top : 20,
+    zIndex : 200,
+    
   }
 });
 export default Attendance;

@@ -5,26 +5,22 @@ import { getDefaultMiddleware } from '@reduxjs/toolkit';
 import { combineReducers } from 'redux'
 import authReducer from "../Slices/authSlice"
 
-// const persistConfig = {
-//   key: 'root',
-//   storage: AsyncStorage,
-// };
+const persistConfig = {
+  key: 'root',
+  storage: AsyncStorage,
+};
 
-// const rootReducer = combineReducers({
-//     auth : authReducer
-//   })
+const rootReducer = combineReducers({
+    auth : authReducer
+  })
 
-// const persistedReducer = persistReducer(persistConfig, rootReducer);
-
-// export const persistor = persistStore(store);
-
-
-
-
-export default configureStore({
-        reducer : {
-          auth : authReducer
-        }
-    //  persistedReducer,
-// middleware: () => getDefaultMiddleware(),
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+const store = configureStore({
+  reducer: persistedReducer,
 });
+
+const persistor = persistStore(store);
+
+export { store, persistor };
+
+
